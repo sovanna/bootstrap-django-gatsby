@@ -1,0 +1,74 @@
+version: "3.0"
+
+services:
+
+  nginx:
+    image: nginx
+    environment:
+      - VIRTUAL_HOST=${BDG_PUBLIC_HOST}
+      - VIRTUAL_PORT=80
+    depends_on:
+      - server
+      - frontend
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./server/src/static:/usr/share/nginx/html/static:ro
+
+
+  server:
+    environment:
+      - HOST=${BDG_SERVER_HOSTNAME}
+      - PUBLIC_HOST=${BDG_PUBLIC_HOST}
+      - DB_DATABASE=${BDG_DB_NAME}
+      - DB_USER=${BDG_DB_USER}
+      - DB_PASSWORD=${BDG_DB_USER_PWD}
+      - DB_HOST=${BDG_DB_HOST}
+      - DB_PORT=${BDG_DB_PORT}
+      - SECRET_KEY=${BDG_SECRET_KEY}
+      - SERVER_DEBUG=${BDG_SERVER_DEBUG}
+      - SV_PWD=${BDG_SV_PWD}
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    depends_on:
+      - db
+      - redis-cache
+    volumes:
+      - ./server:/usr/src/app
+
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./frontend:/home/node/app
+      - node_modules-frontend:/home/node/app/node_modules
+
+
+  db:
+    image: postgres:11
+    environment:
+      - POSTGRES_DB=${BDG_DB_NAME}
+      - POSTGRES_USER=${BDG_DB_USER}
+      - POSTGRES_PASSWORD=${BDG_DB_USER_PWD}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ./var/lib/postgresql:/var/lib/postgresql/data/pgdata
+
+
+  redis-cache:
+    image: redis:5
+    volumes:
+      - ./var/lib/redis:/data
+
+
+volumes:
+  node_modules-frontend:
+
+
+networks:
+  default:
+    external:
+      name: nginx-proxy

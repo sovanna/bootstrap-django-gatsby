@@ -1,0 +1,29 @@
+FROM pypy:3
+
+WORKDIR /usr/src/app/
+
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+COPY supervisor/supervisord-dev.conf /etc/supervisor/conf.d/supervisord.conf
+
+RUN apt-get update \
+  && apt-get install python3-dev -y \
+  && apt-get install vim-nox -y \
+  && apt-get install locales -y \
+  && sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
+  && dpkg-reconfigure --frontend=noninteractive locales \
+  && mkdir -p /var/log/supervisord \
+  && apt-get install -y supervisor \
+  && apt-get clean \
+  && apt-get autoremove \
+  && groupadd -r ludock \
+  && useradd -r -s /bin/false -g ludock ludock \
+  && chown -R ludock:ludock /var/log/supervisor/ \
+  && chown -R ludock:ludock /var/log/supervisord
+
+EXPOSE 8000
+
+USER ludock
+
+ENTRYPOINT ["supervisord"]

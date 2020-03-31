@@ -1,0 +1,5 @@
+[pep8]
+exclude = .venv/,venv/,htmlcov/
+show-source = true
+show-pep8 = true
+statistics = true
