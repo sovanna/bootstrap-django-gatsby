@@ -12,8 +12,8 @@ The purpose is to mimic almost a production setup:
 But it's still a development environement, so:
 
 - Gastby is running through `gatsby develop`
-- Django has DEBUG=True
-- Gunicorn has reload=True
+- Django has `DEBUG=True`
+- Gunicorn has `reload=True`
 
 Also, here are some actual tools versions used in this project:
 
@@ -144,13 +144,13 @@ You should see **Welcome to Django!**
 
 
 
-# In your day-to-day, don't forget to
+# In your day-to-day, don't forget to :star:
 
 **Everythings is inside docker container, so every commands should be run inside container**
 
 Some useful command just in case:
 
-## checks container logs (split your terminal)
+### checks container logs (split your terminal)
 
 - `docker-compose -f docker-compose.dev.yml logs -f server`
 - `docker-compose -f docker-compose.dev.yml logs -f frontend`
@@ -158,7 +158,7 @@ Some useful command just in case:
 
     etc
 
-## going inside containers
+### going inside containers
 
 - `docker-compose -f docker-compose.dev.yml exec server /bin/bash`
 
@@ -166,26 +166,26 @@ Some useful command just in case:
 
 - `docker-compose -f docker-compose.dev.yml exec frontend /bin/bash`
 
-## going inside postgre container
+### going inside postgre container
 
 - `docker-compose -f docker-compose.dev.yml exec db psql -h db bootstrap-django-gatsby daisie`
 
     (password daisie)
 
 
-## Collect Django static files when needed (one line without entering inside container)
+### Collect Django static files when needed (one line without entering inside container)
 
 ```
 docker-compose -f docker-compose.dev.yml exec server /bin/bash -c "cd src && pypy3 manage.py collectstatic"
 ```
 
-## Django migration (one line without entering inside container)
+### Django migration (one line without entering inside container)
 
 ```
 docker-compose -f docker-compose.dev.yml exec server /bin/bash -c "cd src && pypy3 manage.py migrate"
 ```
 
-## Install a package in server (django) container (you must be root to install a package), here is the one-liner
+### Install a package in server (django) container (you must be root to install a package), here is the one-liner
 
 *for example, installing djangorestframework*
 
@@ -193,17 +193,38 @@ docker-compose -f docker-compose.dev.yml exec server /bin/bash -c "cd src && pyp
 docker-compose -f docker-compose.dev.yml exec -u root server /bin/bash -c "pip install djangorestframework && pip freeze > requirements.txt"
 ```
 
-## Install a package in frontend container (same for Django, you must be root)
+### Install a package in frontend container (same for Django, you must be root)
 
 ```
 docker-compose -f docker-compose.dev.yml exec -u root frontend /bin/bash -c "npm install --save redux"
 ```
 
-## Careful of pypy container
+
+# Warnings :boom:
+
+
+### Careful of pypy container
 
 **you need to use pypy3 command as it's a pypy container, python command does not exist**
 
 
+### Django is behing Nginx
 
-*Also, you can look how to use docker-compose in the offical documentation*
+if needed, update nginx default conf e.g `client_max_body_size` for upload stuff
 
+
+### supervisorctl (even though I've never used it in development)
+
+supervisord is running on non-root, plus, he is protected by a password.
+
+For example, inside `server` container
+
+```
+supervisorctl -c /etc/supervisor/conf.d/supervisord.conf -u ludock -p daisie status all
+```
+
+or without going inside container
+
+```
+docker-compose -f docker-compose.dev.yml exec server /bin/bash -c "supervisorctl -c /etc/supervisor/conf.d/supervisord.conf -u ludock -p daisie status all"
+```
