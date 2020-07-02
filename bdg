@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+
+case $1 in
+    docker)
+        case $2 in
+            up)
+                docker-compose -f docker-compose.dev.yml up -d $3
+            ;;
+            stop)
+                docker-compose -f docker-compose.dev.yml stop $3
+            ;;
+            build)
+                docker-compose -f docker-compose.dev.yml build $3
+            ;;
+            reset)
+                docker-compose -f docker-compose.dev.yml stop
+                docker-compose -f docker-compose.dev.yml rm -f
+                docker-compose -f docker-compose.dev.yml build
+                docker-compose -f docker-compose.dev.yml up -d
+            ;;
+            restart)
+                docker-compose -f docker-compose.dev.yml restart $3
+            ;;
+            ps)
+                docker-compose -f docker-compose.dev.yml ps
+            ;;
+        esac
+        exit 0
+    ;;
+    ssh)
+        case $2 in
+            server)
+                docker-compose -f docker-compose.dev.yml exec server /bin/bash
+            ;;
+            front)
+                docker-compose -f docker-compose.dev.yml exec frontend /bin/bash
+            ;;
+        esac
+        exit 0
+    ;;
+    ssh-root)
+        case $2 in
+            server)
+                docker-compose -f docker-compose.dev.yml exec -u root server /bin/bash
+            ;;
+            front)
+                docker-compose -f docker-compose.dev.yml exec -u root frontend /bin/bash
+            ;;
+        esac
+        exit 0
+    ;;
+    db)
+        case $2 in
+            psql)
+                docker-compose -f docker-compose.dev.yml exec db psql -h db $3 $4
+            ;;
+            migrate)
+                docker-compose -f docker-compose.dev.yml exec server /bin/bash -c "cd src && pypy3 manage.py makemigrations"
+                docker-compose -f docker-compose.dev.yml exec server /bin/bash -c "cd src && pypy3 manage.py migrate"
+            ;;
+        esac
+        exit 0
+    ;;
+    test)
+        case $2 in
+            all)
+                docker-compose -f docker-compose.dev.yml exec server /bin/bash -c "cd src && coverage erase && coverage run manage.py test --keepdb"
+            ;;
+            report)
+                docker-compose -f docker-compose.dev.yml exec server /bin/bash -c "cd src && coverage report"
+            ;;
+            run)
+                docker-compose -f docker-compose.dev.yml exec server /bin/bash -c "cd src && coverage erase && coverage run manage.py test --keepdb $3"
+            ;;
+        esac
+        exit 0
+    ;;
+    log)
+        case $2 in
+            server)
+                docker-compose -f docker-compose.dev.yml logs -f server
+            ;;
+            front)
+                docker-compose -f docker-compose.dev.yml logs -f frontend
+            ;;
+        esac
+        exit 0
+    ;;
+    front)
+        case $2 in
+            install)
+                docker-compose -f docker-compose.dev.yml exec -u root frontend /bin/bash -c "npm install --save $3"
+            ;;
+        esac
+        exit 0
+    ;;
+    server)
+        case $2 in
+            collect-static)
+                docker-compose -f docker-compose.dev.yml exec server /bin/bash -c "cd src && pypy3 manage.py collectstatic"
+            ;;
+        esac
+        exit 0
+    esac
