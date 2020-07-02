@@ -1,7 +1,7 @@
 asgiref==3.2.7
 cffi==1.13.2
 coverage==5.0.4
-Django==3.0.4
+Django==3.0.7
 greenlet==0.4.13
 gunicorn==20.0.4
 psycopg2cffi==2.8.1
